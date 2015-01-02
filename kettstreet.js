@@ -10,6 +10,15 @@
   }
 }( this, function () {
 
+  /*
+   * kettstreet.js 0.0.0, a JavaScript OPeNDAP client.
+   *
+   * Contains original code from
+   *
+   *   http://jsdap.googlecode.com/svn/trunk/
+   *     (c) 2007--2009 Roberto De Almeida
+   */
+
   var atomicTypes = ['byte',
                      'int',
                      'uint',
