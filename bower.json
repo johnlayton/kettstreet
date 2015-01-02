@@ -1,0 +1,16 @@
+{
+  "name": "kettstreet",
+  "version": "0.0.0",
+  "authors": [
+    "john layton <johnstewartlayton@gmail.com>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
