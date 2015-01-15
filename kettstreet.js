@@ -6,7 +6,7 @@
     define( [], factory );
   }
   else {
-    jsdap = factory();
+    kettstreet = factory();
   }
 }( this, function () {
 
@@ -34,7 +34,7 @@
   var structures = ['Sequence', 'Structure', 'Dataset'];
 
   Array.prototype.contains = function ( item ) {
-    for ( i = 0, el = this[i]; i < this.length; el = this[++i] ) {
+    for ( var i = 0, el = this[i]; i < this.length; el = this[++i] ) {
       if ( item == el ) {
         return true;
       }
@@ -63,7 +63,7 @@
     return str;
   }
 
-  function dapType( type ) {
+  function DapType( type ) {
     this.type = type;
     this.attributes = {};
   }
@@ -73,7 +73,7 @@
 
     this.peek = function ( expr ) {
       var regExp = new RegExp( '^' + expr, 'i' );
-      m = this.stream.match( regExp );
+      var m = this.stream.match( regExp );
       if ( m ) {
         return m[0];
       }
@@ -84,13 +84,12 @@
 
     this.consume = function ( expr ) {
       var regExp = new RegExp( '^' + expr, 'i' );
-      m = this.stream.match( regExp );
+      var m = this.stream.match( regExp );
       if ( m ) {
         this.stream = this.stream.substr( m[0].length ).ltrim();
         return m[0];
       }
       else {
-        debugger;
         throw new Error( "Unable to parse stream: " + this.stream.substr( 0, 10 ) );
       }
     };
@@ -100,7 +99,7 @@
     this.stream = this.dds = dds;
 
     this._dataset = function () {
-      var dataset = new dapType( 'Dataset' );
+      var dataset = new DapType( 'Dataset' );
 
       this.consume( 'Dataset' );
       this.consume( '{' );
@@ -115,8 +114,8 @@
 
       // Set id.
       function walk( dapvar, includeParent ) {
-        for ( attr in dapvar ) {
-          child = dapvar[attr];
+        for ( var attr in dapvar ) {
+          var child = dapvar[attr];
           if ( child.type ) {
             child.id = child.name;
             if ( includeParent ) {
@@ -148,7 +147,7 @@
     };
 
     this._base_declaration = function () {
-      var baseType = new dapType();
+      var baseType = new DapType();
 
       baseType.type = this.consume( '\\w+' );
       baseType.name = this.consume( '\\w+' );
@@ -157,7 +156,7 @@
       baseType.shape = [];
       while ( !this.peek( ';' ) ) {
         this.consume( '\\[' );
-        token = this.consume( '\\w+' );
+        var token = this.consume( '\\w+' );
         if ( this.peek( '=' ) ) {
           baseType.dimensions.push( token );
           this.consume( '=' );
@@ -172,7 +171,7 @@
     };
 
     this._grid = function () {
-      var grid = new dapType( 'Grid' );
+      var grid = new DapType( 'Grid' );
 
       this.consume( 'grid' );
       this.consume( '{' );
@@ -197,7 +196,7 @@
     };
 
     this._sequence = function () {
-      var sequence = new dapType( 'Sequence' );
+      var sequence = new DapType( 'Sequence' );
 
       this.consume( 'sequence' );
       this.consume( '{' );
@@ -214,7 +213,7 @@
     };
 
     this._structure = function () {
-      var structure = new dapType( 'Structure' );
+      var structure = new DapType( 'Structure' );
 
       this.consume( 'structure' );
       this.consume( '{' );
@@ -237,7 +236,7 @@
     this.stream = this.das = das;
     this.dataset = dataset;
 
-    this.parse = function () {
+    this._attributes = function () {
       this._target = this.dataset;
 
       this.consume( 'attributes' );
@@ -249,6 +248,7 @@
 
       return this.dataset;
     };
+    this.parse = this._attributes;
 
     this._attr_container = function () {
       if ( atomicTypes.contains( this.peek( '\\w+' ).toLowerCase() ) ) {
@@ -331,7 +331,7 @@
 
         if ( (type.toLowerCase() == 'string') ||
              (type.toLowerCase() == 'url') ) {
-          value = pseudoSafeEval( value );
+          //value = pseudoSafeEval( value );
         }
         else if ( type.toLowerCase() == 'alias' ) {
           var target, tokens;
@@ -366,7 +366,7 @@
             value = NaN;
           }
           else {
-            value = pseudoSafeEval( value );
+            //value = pseudoSafeEval( value );
           }
         }
         values.push( value );
@@ -386,7 +386,7 @@
 
   DASParser.prototype = new SimpleParser;
 
-  function DAPUnpacker( xdrdata, dapvar ) {
+  function DAPParser( xdrdata, dapvar ) {
 
     this._buf = xdrdata;
     this.dapvar = dapvar;
@@ -396,20 +396,18 @@
     this.getValue = function () {
       //var i = this._pos;
       var type = this.dapvar.type.toLowerCase();
-
       if ( type == 'structure' || type == 'dataset' ) {
         var out = [], tmp;
         dapvar = this.dapvar;
-        for ( child in dapvar ) {
+        for ( var child in dapvar ) {
           if ( dapvar[child].type ) {
             this.dapvar = dapvar[child];
             tmp = this.getValue();
-            out.push( {var: this.dapvar, data: tmp} );
+            out.push( {das: this.dapvar, data: tmp} );
           }
         }
         this.dapvar = dapvar;
         return out;
-
       }
       else if ( type == 'grid' ) {
         var out = [], tmp;
@@ -417,38 +415,38 @@
 
         this.dapvar = dapvar.array;
         tmp = this.getValue();
-        out.push( tmp );
+        out.push( {das: this.dapvar, data: tmp} );
 
-        for ( map in dapvar.maps ) {
+        for ( var map in dapvar.maps ) {
           this.dapvar = dapvar.maps[map];
           tmp = this.getValue();
-          out.push( tmp );
+          out.push( {das: this.dapvar, data: tmp} );
         }
 
         this.dapvar = dapvar;
         return out;
-        /*
-
-         } else if (type == 'sequence') {
-         var mark = this._unpack_uint32();
-         var out = [], struct, tmp;
-         dapvar = this.dapvar;
-         while (mark != 2768240640) {
-         struct = [];
-         for (child in dapvar) {
-         if (dapvar[child].type) {
-         this.dapvar = dapvar[child];
-         tmp = this.getValue();
-         struct.push(tmp);
-         }
-         }
-         out.push(struct);
-         mark = this._unpack_uint32();
-         }
-         this.dapvar = dapvar;
-         return out;
+      }
+      else if ( type == 'sequence' ) {
+        var mark = this._unpack_uint32();
+        var out = [], struct, tmp;
+        var dapvar = this.dapvar;
+        while ( mark != 2768240640 ) {
+          struct = [];
+          for ( var child in dapvar ) {
+            if ( dapvar[child].type ) {
+              this.dapvar = dapvar[child];
+              tmp = this.getValue();
+              struct.push( tmp );
+            }
+          }
+          out.push( struct );
+          mark = this._unpack_uint32();
+        }
+        this.dapvar = dapvar;
+        return out;
          // This is a request for a base type variable inside a
          // sequence.
+         /*
          } else if (this._buf.slice(i, i+4) == START_OF_SEQUENCE) {
          var mark = this._unpack_uint32();
          var out = [], tmp;
@@ -517,7 +515,10 @@
         out = out[0];
       }
 
-      return {var: this.dapvar, data: out}
+      return out; //
+      //debugger;
+
+      //return {das: this.dapvar, data: out}
     };
 
     this._unpack_byte = function () {
@@ -612,17 +613,184 @@
       out.push( reshape( array.slice( start, stop ), shape.slice( 1 ) ) );
     }
     return out;
-  }
-
-  return function ( data ) {
-    var dods = new DataView( data );
-    var dds = '';
-    for ( var i = 0; i < dods.byteLength && !dds.match( /\nData:\n$/ ); i++ ) {
-      dds += String.fromCharCode( dods.getUint8( i ) );
-    }
-    dds = dds.substr( 0, dds.length - 7 );
-    var dapvar = new DDSParser( dds ).parse();
-
-    return [dapvar, new DAPUnpacker( new DataView( dods.buffer.slice( dds.length + 7 ) ), dapvar ).getValue()];
   };
+
+  var Kettstreet = (function () {
+
+    var Kettstreet = function ( options ) {
+      this.options = options;
+    };
+
+    Kettstreet.prototype.header = function ( data ) {
+      var dods = new DataView( data );
+      var dds = '';
+      for ( var i = 0; i < dods.byteLength && !dds.match( /\nData:\n$/ ); i++ ) {
+        dds += String.fromCharCode( dods.getUint8( i ) );
+      }
+
+      if ( dds.match( /\nData:\n$/ ) ) {
+        return {
+          length: dds.length,
+          text  : dds.substr( 0, dds.length - 7 )
+        }
+      }
+      else {
+        return {
+          length: dds.length,
+          text  : dds
+        }
+      }
+    };
+
+    Kettstreet.prototype.dds = function ( callback ) {
+      var self = this;
+      if ( self._dds ) {
+        callback( undefined, self._dds );
+      }
+      else {
+        this.options.provider( this.options.url + ".dds", function ( err, data ) {
+          if ( err ) {
+            callback( err );
+          }
+          else {
+            self._dds = new DDSParser( self.header( data ).text ).parse();
+            callback( undefined, self._dds );
+          }
+        } );
+      }
+    };
+
+    Kettstreet.prototype.das = function ( callback ) {
+      var self = this;
+      if ( self._das ) {
+        callback( undefined, self._das );
+      }
+      else {
+        self.dds( function ( err, dds ) {
+          self.options.provider( self.options.url + ".das", function ( err, data ) {
+            if ( err ) {
+              callback( err );
+            }
+            else {
+              self._das = new DASParser( self.header( data ).text, dds ).parse();
+              callback( undefined, self._das );
+            }
+          } );
+        } );
+      }
+    };
+
+    Kettstreet.prototype.dim = function ( variable, callback ) {
+      var self = this;
+      if ( self["_" + variable] ) {
+        callback( undefined, self["_" + variable] );
+      }
+      else {
+        self.das( function ( err, das ) {
+          var url = self.options.url + ".dods?" + variable;
+          self.options.provider( url, function ( err, data ) {
+            if ( err ) {
+              callback( err );
+            }
+            else {
+              var header = self.header( data );
+              var das = new DDSParser( header.text ).parse();
+              var dap = new DAPParser( new DataView( data.slice( header.length ) ), das ).getValue();
+              self["_" + variable] = dap;
+              callback( undefined, self["_" + variable] );
+            }
+          } );
+        } );
+      }
+    };
+
+    Kettstreet.prototype.dims = function ( variable, callback ) {
+      var self = this;
+      if ( self._dim ) {
+        callback( undefined, self._dim );
+      }
+      else {
+        self.das( function ( err, das ) {
+          var url = self.options.url + ".dods?" + das[variable].array.dimensions.join( ',' );
+          self.options.provider( url, function ( err, data ) {
+            if ( err ) {
+              callback( err );
+            }
+            else {
+              var header = self.header( data );
+              var das = new DDSParser( header.text ).parse();
+              var dap = new DAPParser( new DataView( data.slice( header.length ) ), das ).getValue();
+              self._dim = dap;
+              callback( undefined, self._dim );
+            }
+          } );
+        } );
+      }
+    };
+
+    Kettstreet.prototype.dap = function ( variable, query, callback ) {
+
+      var _ = require( 'lodash' );
+
+      var params = function ( das, dim ) {
+        var findData = function ( name ) {
+          return _.find( dim, function ( i ) { return i.das.name == name } ).data;
+        };
+        var p = [];
+        for ( var i = 0; i < das[variable].array.dimensions.length; i++ ) {
+          var name = das[variable].array.dimensions[i];
+          var data = findData( name );
+
+
+          var a = query[name].min ? Math.max( _.findLastIndex( data, function ( i ) {
+            return i < query[name].min
+          } ), 0 ) : 0;
+          var b = query[name].max ? Math.min( _.findIndex( data, function ( i ) {
+            return i > query[name].max
+          } ), ( data.length - 1 ) ) : ( data.length - 1 );
+
+
+          p.push( "[" + a + ":" + ( query[name].step || 1 ) + ":" + b + "]" )
+        }
+        return p.join("");
+      };
+
+      var self = this;
+      self.das( function ( err, das ) {
+        self.dims( variable, function ( err, dim ) {
+          var url = self.options.url + ".dods?" + variable + params( das, dim );
+          self.options.provider( url, function ( err, data ) {
+            if ( err ) {
+              callback( err );
+            }
+            else {
+              var header = self.header( data );
+              var das = new DDSParser( header.text ).parse();
+              var dap = new DAPParser( new DataView( data.slice( header.length ) ), das ).getValue();
+              callback( undefined, dap );
+            }
+          } );
+        } );
+      } );
+    };
+
+    return Kettstreet;
+  })();
+
+  return function ( options ) {
+    return new Kettstreet( options );
+  };
+
+  //return function ( data ) {
+  //  var dods = new DataView( data );
+  //  var dds = '';
+  //  for ( var i = 0; i < dods.byteLength && !dds.match( /\nData:\n$/ ); i++ ) {
+  //    dds += String.fromCharCode( dods.getUint8( i ) );
+  //  }
+  //  dds = dds.substr( 0, dds.length - 7 );
+  //  var dapvar = new DDSParser( dds ).parse();
+  //
+  //  return [dapvar, new DAPUnpacker( new DataView( dods.buffer.slice( dds.length + 7 ) ), dapvar ).getValue()];
+  //};
+
 } ));

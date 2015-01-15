@@ -1,16 +1,19 @@
 {
-  "name": "kettstreet",
-  "version": "0.0.1",
-  "authors": [
+  "name"         : "kettstreet",
+  "version"      : "0.0.1",
+  "authors"      : [
     "john layton <johnstewartlayton@gmail.com>"
   ],
-  "license": "MIT",
-  "private": true,
-  "ignore": [
+  "license"      : "MIT",
+  "private"      : true,
+  "ignore"       : [
     "**/.*",
     "node_modules",
     "bower_components",
     "test",
     "tests"
-  ]
+  ],
+  "dependencies" : {
+    "lodash" : "~2.4.1"
+  }
 }
