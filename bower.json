@@ -1,6 +1,6 @@
 {
   "name"         : "kettstreet",
-  "version"      : "0.0.1",
+  "version"      : "0.0.2",
   "authors"      : [
     "john layton <johnstewartlayton@gmail.com>"
   ],
@@ -14,6 +14,5 @@
     "tests"
   ],
   "dependencies" : {
-    "lodash" : "~2.4.1"
   }
 }

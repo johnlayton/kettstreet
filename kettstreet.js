@@ -730,25 +730,49 @@
 
     Kettstreet.prototype.dap = function ( variable, query, callback ) {
 
-      var _ = require( 'lodash' );
+      var find = function( arr, callback ) {
+        for ( var i = 0, len = arr.length; i < len; i++ ) {
+          if( callback( arr[i] ) ) {
+            return arr[i];
+          }
+        }
+        return null;
+      };
+
+      var findLastIndex = function( arr, callback ) {
+        for ( var i = arr.length; i > 0; --i ) {
+          if( callback( arr[i] ) ) {
+            return i;
+          }
+        }
+        return -1;
+      };
+
+      var findFirstIndex = function( arr, callback ) {
+        for ( var i = 0, len = arr.length; i < len; ++i ) {
+          if( callback( arr[i] ) ) {
+            return i;
+          }
+        }
+        return -1;
+      };
+
+      var findData = function ( dim, name ) {
+        return find( dim, function ( i ) { return i.das.name == name } ).data;
+      };
 
       var params = function ( das, dim ) {
-        var findData = function ( name ) {
-          return _.find( dim, function ( i ) { return i.das.name == name } ).data;
-        };
         var p = [];
         for ( var i = 0; i < das[variable].array.dimensions.length; i++ ) {
           var name = das[variable].array.dimensions[i];
-          var data = findData( name );
+          var data = findData( dim, name );
 
-
-          var a = query[name].min ? Math.max( _.findLastIndex( data, function ( i ) {
+          var a = query[name].min ? Math.max( findLastIndex( data, function ( i ) {
             return i < query[name].min
           } ), 0 ) : 0;
-          var b = query[name].max ? Math.min( _.findIndex( data, function ( i ) {
+          var b = query[name].max ? Math.min( findFirstIndex( data, function ( i ) {
             return i > query[name].max
           } ), ( data.length - 1 ) ) : ( data.length - 1 );
-
 
           p.push( "[" + a + ":" + ( query[name].step || 1 ) + ":" + b + "]" )
         }

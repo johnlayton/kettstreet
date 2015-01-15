@@ -1,6 +1,6 @@
 {
   "name"            : "kettstreet",
-  "version"         : "1.0.0",
+  "version"         : "0.0.2",
   "description"     : "",
   "main"            : "kettstreet.js",
   "scripts"         : {
@@ -13,6 +13,5 @@
     "moment"  : "^2.9.0"
   },
   "dependencies"    : {
-    "lodash" : "^2.4.1"
   }
 }
