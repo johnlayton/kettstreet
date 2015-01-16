@@ -515,9 +515,7 @@
         out = out[0];
       }
 
-      return out; //
-      //debugger;
-
+      return out;
       //return {das: this.dapvar, data: out}
     };
 
@@ -740,7 +738,7 @@
       };
 
       var findLastIndex = function( arr, callback ) {
-        for ( var i = arr.length; i > 0; --i ) {
+        for ( var i = arr.length - 1; i > 0; --i ) {
           if( callback( arr[i] ) ) {
             return i;
           }
@@ -768,10 +766,10 @@
           var data = findData( dim, name );
 
           var a = query[name].min ? Math.max( findLastIndex( data, function ( i ) {
-            return i < query[name].min
+            return i <= query[name].min
           } ), 0 ) : 0;
-          var b = query[name].max ? Math.min( findFirstIndex( data, function ( i ) {
-            return i > query[name].max
+          var b = query[name].max ? Math.min( findLastIndex( data, function ( i ) {
+            return i <= query[name].max
           } ), ( data.length - 1 ) ) : ( data.length - 1 );
 
           p.push( "[" + a + ":" + ( query[name].step || 1 ) + ":" + b + "]" )
@@ -804,17 +802,5 @@
   return function ( options ) {
     return new Kettstreet( options );
   };
-
-  //return function ( data ) {
-  //  var dods = new DataView( data );
-  //  var dds = '';
-  //  for ( var i = 0; i < dods.byteLength && !dds.match( /\nData:\n$/ ); i++ ) {
-  //    dds += String.fromCharCode( dods.getUint8( i ) );
-  //  }
-  //  dds = dds.substr( 0, dds.length - 7 );
-  //  var dapvar = new DDSParser( dds ).parse();
-  //
-  //  return [dapvar, new DAPUnpacker( new DataView( dods.buffer.slice( dds.length + 7 ) ), dapvar ).getValue()];
-  //};
 
 } ));
