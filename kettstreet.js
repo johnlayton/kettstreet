@@ -394,7 +394,6 @@
     this._pos = 0;
 
     this.getValue = function () {
-      //var i = this._pos;
       var type = this.dapvar.type.toLowerCase();
       if ( type == 'structure' || type == 'dataset' ) {
         var out = [], tmp;
@@ -412,17 +411,14 @@
       else if ( type == 'grid' ) {
         var out = [], tmp;
         dapvar = this.dapvar;
-
         this.dapvar = dapvar.array;
         tmp = this.getValue();
         out.push( {das: this.dapvar, data: tmp} );
-
         for ( var map in dapvar.maps ) {
           this.dapvar = dapvar.maps[map];
           tmp = this.getValue();
           out.push( {das: this.dapvar, data: tmp} );
         }
-
         this.dapvar = dapvar;
         return out;
       }
@@ -444,9 +440,10 @@
         }
         this.dapvar = dapvar;
         return out;
+         /*
          // This is a request for a base type variable inside a
          // sequence.
-         /*
+
          } else if (this._buf.slice(i, i+4) == START_OF_SEQUENCE) {
          var mark = this._unpack_uint32();
          var out = [], tmp;
