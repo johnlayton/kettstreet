@@ -4,11 +4,13 @@
   "description"     : "",
   "main"            : "kettstreet.js",
   "scripts"         : {
-    "test" : "echo \"Error: no test specified\" && exit 1"
+    "test" : "tap test/*.js"
   },
   "author"          : "",
   "license"         : "ISC",
   "devDependencies" : {
+    "tape"    : "~2.14.0",
+    "tap"     : "~0.4.12",
     "request" : "^2.51.0",
     "moment"  : "^2.9.0"
   },

@@ -762,14 +762,14 @@
           var name = das[variable].array.dimensions[i];
           var data = findData( dim, name );
 
-          var a = query[name].min ? Math.max( findLastIndex( data, function ( i ) {
+          var a = query[name] && query[name].min ? Math.max( findLastIndex( data, function ( i ) {
             return i <= query[name].min
           } ), 0 ) : 0;
-          var b = query[name].max ? Math.min( findLastIndex( data, function ( i ) {
+          var b = query[name] && query[name].max ? Math.min( findLastIndex( data, function ( i ) {
             return i <= query[name].max
           } ), ( data.length - 1 ) ) : ( data.length - 1 );
 
-          p.push( "[" + a + ":" + ( query[name].step || 1 ) + ":" + b + "]" )
+          p.push( "[" + a + ":" + (  query[name] ? query[name].step || 1 : 1 ) + ":" + b + "]" )
         }
         return p.join("");
       };

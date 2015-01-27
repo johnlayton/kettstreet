@@ -1,7 +1,8 @@
 var kettstreet = require( '../kettstreet' );
 var request = require( 'request' );
-var moment = require( 'moment' );
 var util = require( 'util' );
+var moment = require( 'moment' );
+var tape = require( 'tape' );
 
 var provider = function ( url, callback ) {
   function arraybuffer( buffer ) {
@@ -17,8 +18,33 @@ var provider = function ( url, callback ) {
     callback( err, arraybuffer( body ) );
   } );
 };
+kett = kettstreet( {
+  url     : "http://test.opendap.org/dap/data/nc/data.nc",
+  provider: provider
+} );
 
+tape( 'check das', function ( test ) {
+  kett.dds( function ( err, data ) {
+    test.plan( 1 );
+    test.equal( data.type, "Dataset" );
+  } );
+} );
 
+tape( 'check das', function ( test ) {
+  kett.das( function ( err, data ) {
+    test.plan( 1 );
+    test.equal( data.type, "Dataset" );
+  } );
+} );
+
+tape( 'check dap', function ( test ) {
+  kett.dap( "SST", {}, function ( err, data ) {
+    test.plan( 1 );
+    test.equal( data[0].das.type, "Grid" );
+  } );
+} );
+
+/*
 var t_sfc = kettstreet( {
   url     : "http://localhost:8080/firemod/dodsC/bom/IDV71000_VIC_T_SFC.nc",
   provider: provider
@@ -43,7 +69,6 @@ t_sfc.dap( variable, query, function ( err, data ) {
   }
 } );
 
-/*
 kettstreet( {
   url     : "http://test.opendap.org:8080/opendap/hyrax/data/nc/test.nc",
   provider: provider
