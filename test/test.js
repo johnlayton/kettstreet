@@ -23,7 +23,7 @@ kett = kettstreet( {
   provider: provider
 } );
 
-tape( 'check das', function ( test ) {
+tape( 'check dds', function ( test ) {
   kett.dds( function ( err, data ) {
     test.plan( 1 );
     test.equal( data.type, "Dataset" );
