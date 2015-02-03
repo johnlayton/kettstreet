@@ -90,7 +90,7 @@
         return m[0];
       }
       else {
-        throw new Error( "Unable to parse stream: " + this.stream.substr( 0, 10 ) );
+        throw new Error( "Unable to parse stream: " + this.stream.substr( 0, 100 ) );
       }
     };
   }
@@ -513,7 +513,6 @@
       }
 
       return out;
-      //return {das: this.dapvar, data: out}
     };
 
     this._unpack_byte = function () {
@@ -549,7 +548,7 @@
     this._unpack_float32 = function () {
       var i = this._pos;
       this._pos = i + 4;
-      return this._buf.getFloat32( i, false );
+      return  this._buf.getFloat32( i, false );
     };
 
     this._unpack_float64 = function () {
@@ -608,7 +607,7 @@
       out.push( reshape( array.slice( start, stop ), shape.slice( 1 ) ) );
     }
     return out;
-  };
+  }
 
   var Kettstreet = (function () {
 
@@ -677,11 +676,11 @@
 
     Kettstreet.prototype.dim = function ( variable, callback ) {
       var self = this;
-      if ( self["_" + variable] ) {
-        callback( undefined, self["_" + variable] );
-      }
-      else {
-        self.das( function ( err, das ) {
+      //if ( self["_" + variable] ) {
+      //  callback( undefined, self["_" + variable] );
+      //}
+      //else {
+        self.dds( function ( err, das ) {
           var url = self.options.url + ".dods?" + variable;
           self.options.provider( url, function ( err, data ) {
             if ( err ) {
@@ -696,16 +695,16 @@
             }
           } );
         } );
-      }
+      //}
     };
 
     Kettstreet.prototype.dims = function ( variable, callback ) {
       var self = this;
-      if ( self._dim ) {
-        callback( undefined, self._dim );
-      }
-      else {
-        self.das( function ( err, das ) {
+      //if ( self._dim ) {
+      //  callback( undefined, self._dim );
+      //}
+      //else {
+        self.dds( function ( err, das ) {
           var url = self.options.url + ".dods?" + das[variable].array.dimensions.join( ',' );
           self.options.provider( url, function ( err, data ) {
             if ( err ) {
@@ -715,12 +714,12 @@
               var header = self.header( data );
               var das = new DDSParser( header.text ).parse();
               var dap = new DAPParser( new DataView( data.slice( header.length ) ), das ).getValue();
-              self._dim = dap;
-              callback( undefined, self._dim );
+              //self._dim = dap;
+              callback( undefined, dap );
             }
           } );
         } );
-      }
+      //}
     };
 
     Kettstreet.prototype.dap = function ( variable, query, callback ) {
@@ -743,6 +742,7 @@
         return -1;
       };
 
+/*
       var findFirstIndex = function( arr, callback ) {
         for ( var i = 0, len = arr.length; i < len; ++i ) {
           if( callback( arr[i] ) ) {
@@ -751,6 +751,7 @@
         }
         return -1;
       };
+*/
 
       var findData = function ( dim, name ) {
         return find( dim, function ( i ) { return i.das.name == name } ).data;
@@ -761,21 +762,19 @@
         for ( var i = 0; i < das[variable].array.dimensions.length; i++ ) {
           var name = das[variable].array.dimensions[i];
           var data = findData( dim, name );
-
           var a = query[name] && query[name].min ? Math.max( findLastIndex( data, function ( i ) {
             return i <= query[name].min
           } ), 0 ) : 0;
           var b = query[name] && query[name].max ? Math.min( findLastIndex( data, function ( i ) {
             return i <= query[name].max
           } ), ( data.length - 1 ) ) : ( data.length - 1 );
-
           p.push( "[" + a + ":" + (  query[name] ? query[name].step || 1 : 1 ) + ":" + b + "]" )
         }
         return p.join("");
       };
 
       var self = this;
-      self.das( function ( err, das ) {
+      self.dds( function ( err, das ) {
         self.dims( variable, function ( err, dim ) {
           var url = self.options.url + ".dods?" + variable + params( das, dim );
           self.options.provider( url, function ( err, data ) {
