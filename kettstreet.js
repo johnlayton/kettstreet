@@ -19,18 +19,7 @@
    *     (c) 2007--2009 Roberto De Almeida
    */
 
-  var atomicTypes = ['byte',
-                     'int',
-                     'uint',
-                     'int16',
-                     'uint16',
-                     'int32',
-                     'uint32',
-                     'float32',
-                     'float64',
-                     'string',
-                     'url',
-                     'alias'];
+  var atomicTypes = ['byte', 'int', 'uint', 'int16', 'uint16', 'int32', 'uint32', 'float32', 'float64', 'string', 'url', 'alias'];
   var structures = ['Sequence', 'Structure', 'Dataset'];
 
   Array.prototype.contains = function ( item ) {
@@ -675,51 +664,27 @@
     };
 
     Kettstreet.prototype.dim = function ( variable, callback ) {
-      var self = this;
-      //if ( self["_" + variable] ) {
-      //  callback( undefined, self["_" + variable] );
-      //}
-      //else {
-        self.dds( function ( err, das ) {
-          var url = self.options.url + ".dods?" + variable;
-          self.options.provider( url, function ( err, data ) {
-            if ( err ) {
-              callback( err );
-            }
-            else {
-              var header = self.header( data );
-              var das = new DDSParser( header.text ).parse();
-              var dap = new DAPParser( new DataView( data.slice( header.length ) ), das ).getValue();
-              self["_" + variable] = dap;
-              callback( undefined, self["_" + variable] );
-            }
-          } );
-        } );
-      //}
-    };
 
-    Kettstreet.prototype.dims = function ( variable, callback ) {
+      function params( variable ) {
+        return variable.array ? variable.array.dimensions.join( ',' ) : variable.name
+      }
+
       var self = this;
-      //if ( self._dim ) {
-      //  callback( undefined, self._dim );
-      //}
-      //else {
-        self.dds( function ( err, das ) {
-          var url = self.options.url + ".dods?" + das[variable].array.dimensions.join( ',' );
-          self.options.provider( url, function ( err, data ) {
-            if ( err ) {
-              callback( err );
-            }
-            else {
-              var header = self.header( data );
-              var das = new DDSParser( header.text ).parse();
-              var dap = new DAPParser( new DataView( data.slice( header.length ) ), das ).getValue();
-              //self._dim = dap;
-              callback( undefined, dap );
-            }
-          } );
+      self.dds( function ( err, das ) {
+        var url = self.options.url + ".dods?" + params( das[variable] );
+        self.options.provider( url, function ( err, data ) {
+          if ( err ) {
+            callback( err );
+          }
+          else {
+            var header = self.header( data );
+            var das = new DDSParser( header.text ).parse();
+            var dap = new DAPParser( new DataView( data.slice( header.length ) ), das ).getValue();
+            //self._dim = dap;
+            callback( undefined, dap );
+          }
         } );
-      //}
+      } );
     };
 
     Kettstreet.prototype.dap = function ( variable, query, callback ) {
@@ -757,10 +722,11 @@
         return find( dim, function ( i ) { return i.das.name == name } ).data;
       };
 
-      var params = function ( das, dim ) {
+      var params = function ( variable, dim ) {
         var p = [];
-        for ( var i = 0; i < das[variable].array.dimensions.length; i++ ) {
-          var name = das[variable].array.dimensions[i];
+        var dimensions = variable.array ? variable.array.dimensions : variable.dimensions;
+        for ( var i = 0; i < dimensions.length; i++ ) {
+          var name = dimensions[i];
           var data = findData( dim, name );
           var a = query[name] && query[name].min ? Math.max( findLastIndex( data, function ( i ) {
             return i <= query[name].min
@@ -775,8 +741,8 @@
 
       var self = this;
       self.dds( function ( err, das ) {
-        self.dims( variable, function ( err, dim ) {
-          var url = self.options.url + ".dods?" + variable + params( das, dim );
+        self.dim( variable, function ( err, dim ) {
+          var url = self.options.url + ".dods?" + variable + ( (query instanceof Object)? params( das[ variable ], dim ) : query );
           self.options.provider( url, function ( err, data ) {
             if ( err ) {
               callback( err );
