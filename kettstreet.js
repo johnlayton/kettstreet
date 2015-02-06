@@ -464,30 +464,14 @@
         out = [];
         var func;
         switch ( type ) {
-          case 'float32':
-            func = '_unpack_float32';
-            break;
-          case 'float64':
-            func = '_unpack_float64';
-            break;
-          case 'int'    :
-            func = '_unpack_int32';
-            break;
-          case 'uint'   :
-            func = '_unpack_uint32';
-            break;
-          case 'int16'  :
-            func = '_unpack_int16';
-            break;
-          case 'uint16' :
-            func = '_unpack_uint16';
-            break;
-          case 'int32'  :
-            func = '_unpack_int32';
-            break;
-          case 'uint32' :
-            func = '_unpack_uint32';
-            break;
+          case 'float32': func = '_unpack_float32'; break;
+          case 'float64': func = '_unpack_float64'; break;
+          case 'int'    : func = '_unpack_int32'; break;
+          case 'uint'   : func = '_unpack_uint32'; break;
+          case 'int16'  : func = '_unpack_int16'; break;
+          case 'uint16' : func = '_unpack_uint16'; break;
+          case 'int32'  : func = '_unpack_int32'; break;
+          case 'uint32' : func = '_unpack_uint32'; break;
         }
         for ( var i = 0; i < n; i++ ) {
           out.push( this[func]() );
@@ -680,7 +664,6 @@
             var header = self.header( data );
             var das = new DDSParser( header.text ).parse();
             var dap = new DAPParser( new DataView( data.slice( header.length ) ), das ).getValue();
-            //self._dim = dap;
             callback( undefined, dap );
           }
         } );
@@ -722,27 +705,33 @@
         return find( dim, function ( i ) { return i.das.name == name } ).data;
       };
 
-      var params = function ( variable, dim ) {
-        var p = [];
-        var dimensions = variable.array ? variable.array.dimensions : variable.dimensions;
-        for ( var i = 0; i < dimensions.length; i++ ) {
-          var name = dimensions[i];
-          var data = findData( dim, name );
-          var a = query[name] && query[name].min ? Math.max( findLastIndex( data, function ( i ) {
-            return i <= query[name].min
-          } ), 0 ) : 0;
-          var b = query[name] && query[name].max ? Math.min( findLastIndex( data, function ( i ) {
-            return i <= query[name].max
-          } ), ( data.length - 1 ) ) : ( data.length - 1 );
-          p.push( "[" + a + ":" + (  query[name] ? query[name].step || 1 : 1 ) + ":" + b + "]" )
+      var params = function ( variable, query, dim ) {
+        if ( query && query.match && query.match(/([\d:\d:\d])*/) ) {
+          return query
+        } else if ( variable && ( variable.array.dimensions || variable.dimensions ) ) {
+          var p = [];
+          var dimensions = variable.array ? variable.array.dimensions : variable.dimensions;
+          for ( var i = 0; i < dimensions.length; i++ ) {
+            var name = dimensions[i];
+            var data = findData( dim, name );
+            var a = query[name] && query[name].min ? Math.max( findLastIndex( data, function ( i ) {
+              return i <= query[name].min
+            } ), 0 ) : 0;
+            var b = query[name] && query[name].max ? Math.min( findLastIndex( data, function ( i ) {
+              return i <= query[name].max
+            } ), ( data.length - 1 ) ) : ( data.length - 1 );
+            p.push( "[" + a + ":" + (  query[name] ? query[name].step || 1 : 1 ) + ":" + b + "]" )
+          }
+          return p.join("");
+        } else {
+          return query;
         }
-        return p.join("");
       };
 
       var self = this;
       self.dds( function ( err, das ) {
         self.dim( variable, function ( err, dim ) {
-          var url = self.options.url + ".dods?" + variable + ( (query instanceof Object)? params( das[ variable ], dim ) : query );
+          var url = self.options.url + ".dods?" + variable + params( das[ variable ], query, dim );
           self.options.provider( url, function ( err, data ) {
             if ( err ) {
               callback( err );
