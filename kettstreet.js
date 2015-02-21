@@ -813,12 +813,12 @@
             var name = dimensions[i];
             var data = findData( dim, name );
 
-            var min = query[name] && query[name].min ? Math.max( findLastIndex( data, function ( i ) {
+            var min = query[name] && query[name].hasOwnProperty( 'min' ) ? Math.max( findLastIndex( data, function ( i ) {
               return i <= query[name].min
             } ), 0 ) : 0;
-            var max = query[name] && query[name].max ? Math.min( findLastIndex( data, function ( i ) {
+            var max = query[name] && query[name].hasOwnProperty( 'max' ) ? Math.max( findLastIndex( data, function ( i ) {
               return i <= query[name].max
-            } ), ( data.length - 1 ) ) : ( data.length - 1 );
+            } ), data.length ) : data.length;
             var step = (  query[name] ? query[name].step || 1 : 1 );
 
             p.push( "[" + min + ":" + step + ":" + max + "]" )
