@@ -79,7 +79,7 @@
         return m[0];
       }
       else {
-        throw new Error( "Unable to parse stream: " + this.stream.substr( 0, 100 ) );
+        throw new Error( "Unable to parse stream: " + this.stream.substr( 0, 200 ) );
       }
     };
   }
@@ -818,8 +818,11 @@
             } ), 0 ) : 0;
             var max = query[name] && query[name].hasOwnProperty( 'max' ) ? Math.max( findLastIndex( data, function ( i ) {
               return i <= query[name].max
-            } ), data.length ) : data.length;
+            } ), data.length - 1 ) : data.length - 1;
             var step = (  query[name] ? query[name].step || 1 : 1 );
+
+
+            console.log( query );
 
             p.push( "[" + min + ":" + step + ":" + max + "]" )
           }
