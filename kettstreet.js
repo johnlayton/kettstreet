@@ -778,25 +778,23 @@
         return null;
       };
 
-      var findLastIndex = function( arr, callback ) {
+      var findLastIndex = function( arr, otherwise, callback ) {
         for ( var i = arr.length - 1; i > 0; --i ) {
           if( callback( arr[i] ) ) {
             return i;
           }
         }
-        return -1;
+        return otherwise;
       };
 
-/*
-      var findFirstIndex = function( arr, callback ) {
+      var findFirstIndex = function( arr, otherwise, callback ) {
         for ( var i = 0, len = arr.length; i < len; ++i ) {
           if( callback( arr[i] ) ) {
             return i;
           }
         }
-        return -1;
+        return otherwise;
       };
-*/
 
       var findData = function ( dim, name ) {
         return find( dim, function ( i ) { return i.das.name == name } ).data;
@@ -813,16 +811,16 @@
             var name = dimensions[i];
             var data = findData( dim, name );
 
-            var min = query[name] && query[name].hasOwnProperty( 'min' ) ? Math.max( findLastIndex( data, function ( i ) {
-              return i <= query[name].min
-            } ), 0 ) : 0;
-            var max = query[name] && query[name].hasOwnProperty( 'max' ) ? Math.max( findLastIndex( data, function ( i ) {
-              return i <= query[name].max
-            } ), data.length - 1 ) : data.length - 1;
+            var min_idx = 0;
+            var max_idx = data.length - 1;
+
+            var min =  findLastIndex( data, min_idx, function ( i ) {
+              return i <= ( query[name] ? ( query[name].min || data[min_idx] ) : data[min_idx] );
+            } );
+            var max = findFirstIndex( data, max_idx, function ( i ) {
+              return i >= ( query[name] ? ( query[name].max || data[min_idx] ) : data[min_idx] );
+            } );
             var step = (  query[name] ? query[name].step || 1 : 1 );
-
-
-            console.log( query );
 
             p.push( "[" + min + ":" + step + ":" + max + "]" )
           }
