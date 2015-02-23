@@ -583,70 +583,74 @@
   }
 
   var LocalStore = ( function(){
-    var cache = {};
 
     var LocalStore = function ( options ) {
       this.options = options;
     };
 
-    LocalStore.prototype.getItem = function( key ) {
-      //localStorage.getItem( 'dds' )
-      //JSON.parse( localStorage.getItem( 'dds' ) )
-      //JSON.parse( cache[key] );
-      return cache[key];
-    };
-
-    LocalStore.prototype.setItem = function( key, data ) {
-      //localStorage.setItem( 'das', JSON.stringify( data ) );
-      //cache[key] = JSON.stringify( data );
-      cache[key] = data;
-    };
-
     LocalStore.prototype.dds = function( callback ) {
       var self = this;
-      if ( self.getItem( 'dds' ) ) {
-        console.log( "Found Local Storage DDS .." );
-        callback( undefined,  JSON.stringify( self.getItem( 'dds' ) ) );
-      } else {
-        this.options.fallback.dds( function( err, data ) {
+      function failure() {
+        self.options.fallback.dds( function( err, data ) {
           if ( !err ) {
-            self.setItem( 'dds', JSON.stringify( data ) );
+            self.options.storage.add( 'dds', JSON.stringify( data ) );
             callback( undefined, data );
           } else {
             callback( err );
           }
         } );
       }
+      if (this.options.storage) {
+        this.options.storage.get( 'dds', function ( value ) {
+          if (value) {
+            callback( undefined,  JSON.parse( value ) );
+          } else {
+            failure();
+          }
+        }, failure );
+      } else {
+        failure();
+      }
     };
 
     LocalStore.prototype.das = function( callback ) {
       var self = this;
-      if ( self.getItem( 'das' ) ) {
-        console.log( "Found Local Storage DAS .." );
-        callback( undefined, self.getItem( 'das' ) );
-      } else {
-        this.options.fallback.das( function ( err, data ) {
+
+      function failure() {
+        self.options.fallback.das( function ( err, data ) {
           if ( !err ) {
-            self.setItem( 'dds', JSON.stringify( data ) );
+            self.options.storage.add( 'das', JSON.stringify( data ) );
             callback( undefined, data );
           }
           else {
             callback( err );
           }
         } );
+      }
+
+      if ( this.options.storage ) {
+        this.options.storage.get( 'das', function ( value ) {
+          if ( value ) {
+            callback( undefined, JSON.parse( value ) );
+          }
+          else {
+            failure();
+          }
+        }, failure );
+      }
+      else {
+        failure();
       }
     };
 
     LocalStore.prototype.dim = function( variable, callback ) {
       var self = this;
       var key = 'dim [' + JSON.stringify( variable ) + ']';
-      if ( self.getItem( key ) ) {
-        console.log( "Found Local Storage DAP .." );
-        callback( undefined, JSON.parse( self.getItem( key ) ) );
-      } else {
-        this.options.fallback.dim( variable, function ( err, data ) {
+
+      function failure() {
+        self.options.fallback.dim( variable, function ( err, data ) {
           if ( !err ) {
-            self.setItem( key, JSON.stringify( data ) );
+            self.options.storage.add( key, JSON.stringify( data ) );
             callback( undefined, data );
           }
           else {
@@ -654,24 +658,50 @@
           }
         } );
       }
+
+      if ( this.options.storage ) {
+        this.options.storage.get( key, function ( value ) {
+          if ( value ) {
+            callback( undefined, JSON.parse( value ) );
+          }
+          else {
+            failure();
+          }
+        }, failure );
+      }
+      else {
+        failure();
+      }
     };
 
     LocalStore.prototype.dap = function( variable, query, callback ) {
       var self = this;
       var key = 'dap [' + JSON.stringify( {variable : variable, query : query} ) + ']';
-      if ( self.getItem( key ) ) {
-        console.log( "Found Local Storage DAP .." );
-        callback( undefined, JSON.parse( self.getItem( key ) ) );
-      } else {
-        this.options.fallback.dap( variable, query, function ( err, data ) {
+
+      function failure() {
+        self.options.fallback.dap( variable, query, function ( err, data ) {
           if ( !err ) {
-            self.setItem( key, JSON.stringify( data ) );
+            self.options.storage.add( key, JSON.stringify( data ) );
             callback( undefined, data );
           }
           else {
             callback( err );
           }
         } );
+      }
+
+      if ( this.options.storage ) {
+        this.options.storage.get( key, function ( value ) {
+          if ( value ) {
+            callback( undefined, JSON.parse( value ) );
+          }
+          else {
+            failure();
+          }
+        }, failure );
+      }
+      else {
+        failure();
       }
     };
 
@@ -853,7 +883,10 @@
   } )();
 
   return function ( options ) {
-    return new LocalStore( { fallback: new Kettstreet( options ) } );
+    return new LocalStore( {
+      storage  : options.storage,
+      fallback : new Kettstreet( options )
+    } );
   };
 
 } ));
