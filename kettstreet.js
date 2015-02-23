@@ -582,137 +582,36 @@
     return out;
   }
 
-  var LocalStore = ( function(){
-
-    var LocalStore = function ( options ) {
-      this.options = options;
-    };
-
-    LocalStore.prototype.dds = function( callback ) {
-      var self = this;
-      function failure() {
-        self.options.fallback.dds( function( err, data ) {
-          if ( !err ) {
-            self.options.storage.add( 'dds', JSON.stringify( data ) );
-            callback( undefined, data );
-          } else {
-            callback( err );
-          }
-        } );
-      }
-      if (this.options.storage) {
-        this.options.storage.get( 'dds', function ( value ) {
-          if (value) {
-            callback( undefined,  JSON.parse( value ) );
-          } else {
-            failure();
-          }
-        }, failure );
-      } else {
-        failure();
-      }
-    };
-
-    LocalStore.prototype.das = function( callback ) {
-      var self = this;
-
-      function failure() {
-        self.options.fallback.das( function ( err, data ) {
-          if ( !err ) {
-            self.options.storage.add( 'das', JSON.stringify( data ) );
-            callback( undefined, data );
-          }
-          else {
-            callback( err );
-          }
-        } );
-      }
-
-      if ( this.options.storage ) {
-        this.options.storage.get( 'das', function ( value ) {
-          if ( value ) {
-            callback( undefined, JSON.parse( value ) );
-          }
-          else {
-            failure();
-          }
-        }, failure );
-      }
-      else {
-        failure();
-      }
-    };
-
-    LocalStore.prototype.dim = function( variable, callback ) {
-      var self = this;
-      var key = 'dim [' + JSON.stringify( variable ) + ']';
-
-      function failure() {
-        self.options.fallback.dim( variable, function ( err, data ) {
-          if ( !err ) {
-            self.options.storage.add( key, JSON.stringify( data ) );
-            callback( undefined, data );
-          }
-          else {
-            callback( err );
-          }
-        } );
-      }
-
-      if ( this.options.storage ) {
-        this.options.storage.get( key, function ( value ) {
-          if ( value ) {
-            callback( undefined, JSON.parse( value ) );
-          }
-          else {
-            failure();
-          }
-        }, failure );
-      }
-      else {
-        failure();
-      }
-    };
-
-    LocalStore.prototype.dap = function( variable, query, callback ) {
-      var self = this;
-      var key = 'dap [' + JSON.stringify( {variable : variable, query : query} ) + ']';
-
-      function failure() {
-        self.options.fallback.dap( variable, query, function ( err, data ) {
-          if ( !err ) {
-            self.options.storage.add( key, JSON.stringify( data ) );
-            callback( undefined, data );
-          }
-          else {
-            callback( err );
-          }
-        } );
-      }
-
-      if ( this.options.storage ) {
-        this.options.storage.get( key, function ( value ) {
-          if ( value ) {
-            callback( undefined, JSON.parse( value ) );
-          }
-          else {
-            failure();
-          }
-        }, failure );
-      }
-      else {
-        failure();
-      }
-    };
-
-    return LocalStore;
-
-  } )();
-
   var Kettstreet = ( function () {
 
     var Kettstreet = function ( options ) {
       this.options = options;
+      if ( !this.options ) {
+        this.options = {};
+      }
+
+      function Provider( url, callback ) {
+        console.log( url );
+        callback( "Provider not supplied" );
+      }
+      if ( !this.options.provider ) {
+        this.options.provider = new Provider();
+      }
+
+      function Cache() {
+        this.add = function( key, value ) {};
+        this.del = function( key ) {};
+        this.get = function( key, success, failure ) {
+          failure();
+        };
+      }
+      if ( !this.options.cache ) {
+        this.options.cache = new Cache();
+      }
+
+      if ( !this.options.url ) {
+        this.options.url = "Url not supplied";
+      }
     };
 
     Kettstreet.prototype.header = function ( data ) {
@@ -738,39 +637,62 @@
 
     Kettstreet.prototype.dds = function ( callback ) {
       var self = this;
-      if ( self._dds ) {
-        callback( undefined, self._dds );
-      }
-      else {
-        this.options.provider( this.options.url + ".dds", function ( err, data ) {
+
+      function failure() {
+        self.options.provider( self.options.url + ".dds", function ( err, data ) {
           if ( err ) {
             callback( err );
           }
           else {
-            self._dds = new DDSParser( self.header( data ).text ).parse();
-            callback( undefined, self._dds );
+            var dds = new DDSParser( self.header( data ).text ).parse();
+            self.options.cache.add( 'dds', JSON.stringify( dds ) );
+            callback( undefined, dds );
           }
         } );
+      }
+      if (this.options.cache) {
+        this.options.cache.get( 'dds', function ( value ) {
+          if (value) {
+            callback( undefined,  JSON.parse( value ) );
+          } else {
+            failure();
+          }
+        }, failure );
+      } else {
+        failure();
       }
     };
 
     Kettstreet.prototype.das = function ( callback ) {
       var self = this;
-      if ( self._das ) {
-        callback( undefined, self._das );
-      }
-      else {
+
+      function failure() {
         self.dds( function ( err, dds ) {
           self.options.provider( self.options.url + ".das", function ( err, data ) {
             if ( err ) {
               callback( err );
             }
             else {
-              self._das = new DASParser( self.header( data ).text, dds ).parse();
-              callback( undefined, self._das );
+              var das = new DASParser( self.header( data ).text, dds ).parse();
+              self.options.cache.add( 'das', JSON.stringify( das ) );
+              callback( undefined, das );
             }
           } );
         } );
+      }
+
+      if ( this.options.cache ) {
+        this.options.cache.get( 'das', function ( value ) {
+          if ( value ) {
+            callback( undefined, JSON.parse( value ) );
+          }
+          else {
+            failure();
+          }
+        }, failure );
+      }
+      else {
+        failure();
       }
     };
 
@@ -781,20 +703,39 @@
       }
 
       var self = this;
-      self.dds( function ( err, das ) {
-        var url = self.options.url + ".dods?" + params( das[variable] );
-        self.options.provider( url, function ( err, data ) {
-          if ( err ) {
-            callback( err );
+      var key = 'dim [' + JSON.stringify( variable ) + ']';
+
+      function failure() {
+        self.dds( function ( err, dds ) {
+          var url = self.options.url + ".dods?" + params( dds[variable] );
+          self.options.provider( url, function ( err, data ) {
+            if ( err ) {
+              callback( err );
+            }
+            else {
+              var header = self.header( data );
+              var dap = new DAPParser( new DataView( data.slice( header.length ) ),
+                                       new DDSParser( header.text ).parse() ).getValue();
+              self.options.cache.add( key, JSON.stringify( dap ) );
+              callback( undefined, dap );
+            }
+          } );
+        } );
+      }
+
+      if ( this.options.cache ) {
+        this.options.cache.get( key, function ( value ) {
+          if ( value ) {
+            callback( undefined, JSON.parse( value ) );
           }
           else {
-            var header = self.header( data );
-            var das = new DDSParser( header.text ).parse();
-            var dap = new DAPParser( new DataView( data.slice( header.length ) ), das ).getValue();
-            callback( undefined, dap );
+            failure();
           }
-        } );
-      } );
+        }, failure );
+      }
+      else {
+        failure();
+      }
     };
 
     Kettstreet.prototype.dap = function ( variable, query, callback ) {
@@ -861,32 +802,48 @@
       };
 
       var self = this;
-      self.dds( function ( err, das ) {
-        self.dim( variable, function ( err, dim ) {
-          var url = self.options.url + ".dods?" + variable + params( das[ variable ], query, dim );
-          self.options.provider( url, function ( err, data ) {
-            if ( err ) {
-              callback( err );
-            }
-            else {
-              var header = self.header( data );
-              var das = new DDSParser( header.text ).parse();
-              var dap = new DAPParser( new DataView( data.slice( header.length ) ), das ).getValue();
-              callback( undefined, dap );
-            }
+      var key = 'dap [' + JSON.stringify( {variable : variable, query : query} ) + ']';
+
+      function failure() {
+        self.dds( function ( err, dds ) {
+          self.dim( variable, function ( err, dim ) {
+            var url = self.options.url + ".dods?" + variable + params( dds[ variable ], query, dim );
+            self.options.provider( url, function ( err, data ) {
+              if ( err ) {
+                callback( err );
+              }
+              else {
+                var header = self.header( data );
+                var dap = new DAPParser( new DataView( data.slice( header.length ) ),
+                                         new DDSParser( header.text ).parse() ).getValue();
+                self.options.cache.add( key, JSON.stringify( data ) );
+                callback( undefined, dap );
+              }
+            } );
           } );
         } );
-      } );
+      }
+
+      if ( this.options.cache ) {
+        self.options.cache.get( key, function ( value ) {
+          if ( value ) {
+            callback( undefined, JSON.parse( value ) );
+          }
+          else {
+            failure();
+          }
+        }, failure );
+      }
+      else {
+        failure();
+      }
     };
 
     return Kettstreet;
   } )();
 
   return function ( options ) {
-    return new LocalStore( {
-      storage  : options.storage,
-      fallback : new Kettstreet( options )
-    } );
+    return new Kettstreet( options );
   };
 
 } ));
