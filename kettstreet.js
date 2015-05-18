@@ -674,7 +674,7 @@
 
       var self = this;
       self.dds( function ( err, dds ) {
-        var url = self.options.url + ".dods?" + params( dds[variable] );
+        var url = self.options.url + ".dods?" + params( dds[variable] || { 'name' : variable } );
         self.options.provider( url, function ( err, data ) {
           if ( err ) {
             callback( err );
