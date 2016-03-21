@@ -740,10 +740,9 @@
               return i <= ( query[name] ? ( query[name].min || data[min_idx] ) : data[min_idx] );
             } );
             var max = findFirstIndex( data, max_idx, function ( i ) {
-              return i >= ( query[name] ? ( query[name].max || data[min_idx] ) : data[min_idx] );
+              return i >= ( query[name] ? ( query[name].max || data[max_idx] ) : data[max_idx] );
             } );
             var step = (  query[name] ? query[name].step || 1 : 1 );
-
             p.push( "[" + min + ":" + step + ":" + max + "]" )
           }
           return p.join("");
