@@ -38,7 +38,7 @@ tape( 'check das', function ( test ) {
 } );
 
 tape( 'check dap', function ( test ) {
-  kett.dap( "SST", {}, function ( err, data ) {
+  kett.dap( "P", {}, function ( err, data ) {
     test.plan( 1 );
     test.equal( data[0].das.type, "Grid" );
   } );
