@@ -19,7 +19,7 @@ var provider = function ( url, callback ) {
   } );
 };
 kett = kettstreet( {
-  url     : "http://test.opendap.org/dap/data/nc/data.nc",
+  url     : "http://test.opendap.org/dap/data/nc/feb.nc",
   provider: provider
 } );
 
